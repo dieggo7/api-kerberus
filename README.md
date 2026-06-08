@@ -1,110 +1,118 @@
-# KERBERUS — F1 Intelligence Platform
+# KERBERUS — Formula 1 Intelligence · Frontend
 
-Plataforma de gestão de corredores e análise de resultados de corridas.
-
-## 📁 Estrutura do Projeto (Consolidada)
-
-```
-api-do-gui/
-├── src/                          # Código backend
-│   ├── app.js                    # Configuração express e rotas principais
-│   ├── db.js                     # Conexão com banco de dados
-│   └── routes/
-│       ├── users.js              # Rotas de autenticação (POST, GET)
-│       └── corredores.js         # Rotas de corredores (CRUD, ranking, estatísticas)
-│
-├── public/                       # Arquivos frontend (HTML, CSS, JS)
-│   ├── login.html                # Página de autenticação
-│   ├── cadastro.html             # Página de criação de conta
-│   ├── dashboard.html            # Dashboard principal
-│   ├── corredores.html           # Gestão de corredores
-│   ├── ranking.html              # Ranking de pilotos
-│   ├── estatísticas.html         # Estatísticas detalhadas
-│   ├── sidebar.js                # Componente de navegação (injetado em todas as páginas)
-│   └── style.css                 # Estilos globais (tema dark F1)
-│
-├── sql/
-│   └── DDL.sql                   # Schema do banco de dados (MySQL)
-│
-├── server.js                     # Ponto de entrada da aplicação
-├── package.json                  # Dependências do projeto
-├── .env                          # Variáveis de ambiente
-└── README.md                     # Este arquivo
-
-```
-
-## 🚀 Como Executar
-
-### 1. Instalação de Dependências
-```bash
-npm install
-```
-
-### 2. Configurar Banco de Dados
-Execute o script SQL para criar o schema:
-```bash
-mysql -u root -p < sql/DDL.sql
-```
-
-### 3. Configurar Variáveis de Ambiente
-O arquivo `.env` já está configurado com valores padrão:
-```
-PORT=3000
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=corrida_db
-DB_PORT=3307
-JWT_SECRET=idev4_secret_key
-```
-
-### 4. Iniciar o Servidor
-```bash
-npm start
-```
-
-O servidor rodará em `http://localhost:3000`
-
-## 📡 API Endpoints
-
-### Users (Autenticação)
-- `GET /api/users` — Listar todos os usuários
-- `POST /api/users` — Criar novo usuário
-- `POST /api/users/login` — Autenticar usuário
-
-### Corredores (Gestão)
-- `GET /api/corredores/cadastrados` — Listar corredores cadastrados
-- `POST /api/corredores` — Criar novo corredor
-- `PUT /api/corredores/:id` — Atualizar corredor
-- `DELETE /api/corredores/:id` — Deletar corredor
-
-### Corredores (Estatísticas)
-- `GET /api/corredores/melhor-volta` — Melhor tempo registrado
-- `GET /api/corredores/tempo-total` — Tempo total por corredor
-- `GET /api/corredores/voltas` — Total de voltas por corredor
-- `GET /api/corredores/ranking` — Ranking geral dos corredores
-
-## 🗄️ Banco de Dados
-
-### Tabelas
-- **users** — Administradores do sistema
-- **corredores** — Dados dos pilotos
-- **corridas** — Registro de tempos e voltas
-
-## 🎨 Design
-
-Interface moderna com tema **Dark Formula 1**:
-- Cores: Vermelho (#E8001D), Branco, Preto
-- Tipografia: Barlow Condensed (títulos), Barlow (corpo)
-- Responsivo e mobile-first
-
-## 📝 Informações Consolidadas
-
-✅ **Apenas código backend presente** — Frontend está integrado na pasta `public/`
-✅ **Estrutura coesa** — Todas as dependências e arquivos organizados
-✅ **Pronto para produção** — Configuração de ambiente completa
-✅ **Bem documentado** — Comentários nas rotas e padrão claro
+Interface web do sistema **KERBERUS**, plataforma de gerenciamento e acompanhamento de resultados de corridas no estilo Formula 1.
 
 ---
 
-**Desenvolvido para análise de dados de F1**
+## Tecnologias Utilizadas
+
+| Tecnologia | Uso |
+|---|---|
+| **HTML5** | Estrutura de todas as páginas |
+| **CSS3** | Estilização global via `style.css` com variáveis CSS customizadas |
+| **JavaScript (Vanilla ES6+)** | Lógica de interação, chamadas à API e renderização dinâmica |
+| **Fetch API** | Comunicação assíncrona com o backend REST |
+| **localStorage** | Persistência de sessão do usuário (token JWT e dados do usuário) |
+
+> Projeto **100% client-side**, sem frameworks ou dependências externas. Não há `package.json`, bundler ou processo de build — os arquivos são servidos diretamente pelo backend.
+
+---
+
+## Estrutura do Sistema
+
+```
+front-api/
+├── login.html           # Tela de autenticação
+├── cadastro.html        # Tela de criação de conta
+├── dashboard.html       # Visão geral do campeonato
+├── corredores.html      # Gerenciamento de pilotos
+├── ranking.html         # Classificação geral
+├── estatisticas.html    # Estatísticas e visualizações
+├── sidebar.js           # Componente de navegação lateral (compartilhado)
+└── style.css            # Estilos globais (design system)
+```
+
+### Fluxo de Navegação
+
+```
+login.html ──→ dashboard.html
+    │               │
+cadastro.html   corredores.html
+                ranking.html
+                estatisticas.html
+```
+
+### Componente Compartilhado — `sidebar.js`
+
+O arquivo `sidebar.js` é injetado em todas as páginas com layout principal. Ele é responsável por:
+
+- Renderizar a sidebar de navegação com o item ativo destacado (`renderSidebar(activePage)`)
+- Exibir o nome e avatar do usuário logado na topbar
+- Gerenciar o modal de **troca de usuário** sem necessidade de logout (`setupChangeUserModal()`)
+
+### Endpoints de API Consumidos
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/api/users/login` | Autenticação do usuário |
+| `POST` | `/api/users` | Cadastro de novo usuário |
+| `GET` | `/api/corredores` | Lista todos os corredores |
+| `POST` | `/api/corredores` | Cadastra novo corredor |
+| `PUT` | `/api/corredores/:id` | Atualiza dados de um corredor |
+| `DELETE` | `/api/corredores/:id` | Remove um corredor |
+| `GET` | `/api/corredores/ranking` | Ranking geral por tempo acumulado |
+| `GET` | `/api/corredores/melhor-volta` | Retorna a melhor volta registrada |
+| `GET` | `/api/corredores/cadastrados` | Lista corredores (usada em Estatísticas) |
+| `GET` | `/api/estatisticas` | Resumo geral (corridas, melhor tempo) |
+| `GET` | `/api/estatisticas/ranking` | Ranking com pontos/vitórias por corredor |
+
+---
+
+## Funcionalidades Implementadas
+
+### Autenticação (`login.html` / `cadastro.html`)
+
+- Login com e-mail e senha via `POST /api/users/login`
+- Armazenamento do token JWT e dados do usuário no `localStorage`
+- Cadastro de novo usuário com validação de senha e confirmação
+- Redirecionamento automático para o dashboard após login
+
+### Dashboard (`dashboard.html`)
+
+- Cards de resumo: total de corredores, corridas realizadas, turmas participantes e melhor volta
+- Tabela com o **Top 5** do ranking geral
+- Carregamento assíncrono dos dados ao abrir a página
+
+### Gerenciamento de Corredores (`corredores.html`)
+
+- Listagem completa de pilotos cadastrados
+- **Busca em tempo real** por nome ou turma (filtro client-side)
+- **CRUD completo** via modal:
+  - Criar novo corredor (nome, turma, senha)
+  - Editar corredor existente
+  - Remover corredor com confirmação
+- Modal fecha ao clicar fora ou no botão de cancelar
+
+### Ranking (`ranking.html`)
+
+- Classificação geral de todos os corredores por **menor tempo total acumulado**
+- Destaque visual para os 3 primeiros colocados
+- Carregamento via `GET /api/corredores/ranking`
+
+### Estatísticas (`estatisticas.html`)
+
+- **4 cards de resumo**: total de corredores, corridas realizadas, turmas ativas e melhor tempo registrado
+- **Pódio visual** com os 3 primeiros colocados (layout estilo F1: 2º–1º–3º)
+- **Ranking completo** em tabela com posições destacadas
+- **Gráfico de barras** horizontal com vitórias/pontos por corredor (top 8, com animação CSS)
+- **Grid de turmas** mostrando a quantidade de pilotos por turma
+- Banner de erro exibido quando algum endpoint falha (com fallback gracioso)
+- Botão de **atualizar** dados manualmente na topbar
+
+### Navegação e UX (global)
+
+- Sidebar responsiva injetada via JavaScript com item ativo destacado
+- **Modal de troca de usuário** acessível pelo clique no avatar no topo — permite logar com outra conta sem sair da página
+- Estados vazios (`empty-state`) amigáveis em todas as tabelas
+- Skeleton/shimmer de carregamento na página de Estatísticas
+- Design system coerente com variáveis CSS (`--red`, `--black`, `--white`, `--muted`, `--border`)

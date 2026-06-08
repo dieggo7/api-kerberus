@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KERBERUS — Ranking</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="sidebar-root"></div>
+
+<div class="main">
+
+  <header class="topbar">
+    <span class="topbar-title">Ranking</span>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="avatar">U</div>
+        <span id="topbar-user-name">Usuário</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <h1>Ranking Geral</h1>
+      <p>Classificação por tempo total acumulado</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Classificação — Menor Tempo</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pos.</th>
+              <th>Corredor</th>
+              <th>Turma</th>
+              <th>Tempo Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-ranking">
+            <tr>
+              <td colspan="4">
+                <div class="empty-state">
+                  <div class="icon">🏆</div>
+                  <p>Sem dados de ranking ainda</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="sidebar.js"></script>
+<script>
+  renderSidebar('ranking');
+
+  function carregarRanking() {
+    fetch('/api/corredores/ranking')
+      .then(r => r.json())
+      .then(data => renderRanking(data || []))
+      .catch(err => console.error('Erro ao carregar ranking:', err));
+  }
+
+  function renderRanking(lista) {
+    const tbody = document.getElementById('tbody-ranking');
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="icon">🏆</div><p>Sem dados de ranking ainda</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = lista.map((r, i) => `
+      <tr>
+        <td><span class="rank-num ${i < 3 ? 'top' : ''}">${i + 1}</span></td>
+        <td>${r.nome}</td>
+        <td><span class="badge badge-white">${r.turma}</span></td>
+        <td class="${i === 0 ? 'td-red' : ''}">${r['SUM(corridas.tempo)'] ?? '—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  carregarRanking();
+</script>
+
+</body>
+</html>

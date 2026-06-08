@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KERBERUS — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="sidebar-root"></div>
+
+<div class="main">
+
+  <header class="topbar">
+    <span class="topbar-title">Dashboard</span>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="avatar">U</div>
+        <span id="topbar-user-name">Usuário</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <h1>Visão Geral</h1>
+      <p>Resumo das informações do campeonato</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Corredores</div>
+        <div class="stat-value" id="stat-corredores">—</div>
+        <div class="stat-sub">cadastrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Corridas</div>
+        <div class="stat-value" id="stat-corridas">—</div>
+        <div class="stat-sub">realizadas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Melhor Volta</div>
+        <div class="stat-value red" id="stat-melhor-tempo">—</div>
+        <div class="stat-sub" id="stat-melhor-nome">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Turmas</div>
+        <div class="stat-value" id="stat-turmas">—</div>
+        <div class="stat-sub">competindo</div>
+      </div>
+    </div>
+
+    <!-- Ranking rápido -->
+    <div class="card">
+      <div class="card-title">Ranking Rápido — Top 5</div>
+      <div class="table-wrap">
+        <table id="table-ranking">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Corredor</th>
+              <th>Turma</th>
+              <th>Tempo Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-ranking">
+            <tr>
+              <td colspan="4">
+                <div class="empty-state">
+                  <div class="icon">🏁</div>
+                  <p>Sem dados ainda</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="sidebar.js"></script>
+<script>
+  renderSidebar('dashboard');
+
+  // Carregar dados reais do backend
+
+  // Melhor volta: GET /api/corredores/melhor-volta
+  fetch('/api/corredores/melhor-volta')
+    .then(r => r.json())
+    .then(data => {
+      if (data) {
+        document.getElementById('stat-melhor-tempo').textContent = data.tempo + 's';
+        document.getElementById('stat-melhor-nome').textContent  = data.nome;
+      }
+    })
+    .catch(err => console.error(err));
+
+  // Ranking top 5: GET /api/corredores/ranking  (pegar os primeiros 5)
+  fetch('/api/corredores/ranking')
+    .then(r => r.json())
+    .then(rows => {
+      if (rows && rows.length > 0) {
+        const tbody = document.getElementById('tbody-ranking');
+        tbody.innerHTML = rows.slice(0,5).map((r, i) => `
+          <tr>
+            <td><span class="rank-num ${i < 3 ? 'top' : ''}">${i+1}</span></td>
+            <td>${r.nome}</td>
+            <td><span class="badge badge-white">${r.turma}</span></td>
+            <td class="td-red">${r['SUM(corridas.tempo)'] || '—'}</td>
+          </tr>
+        `).join('');
+      }
+    })
+    .catch(err => console.error(err));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KERBERUS — Estatísticas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="sidebar-root"></div>
+
+<div class="main">
+
+  <header class="topbar">
+    <span class="topbar-title">Estatísticas</span>
+    <div class="topbar-actions">
+      <div class="topbar-user">
+        <div class="avatar">U</div>
+        <span id="topbar-user-name">Usuário</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <h1>Estatísticas</h1>
+      <p>Métricas detalhadas do campeonato</p>
+    </div>
+
+    <!-- Melhor Volta -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Melhor Volta</div>
+      <div style="display:flex; align-items:center; gap:32px; flex-wrap:wrap;">
+        <div>
+          <div class="stat-label">Corredor</div>
+          <div style="font-family:var(--font-display); font-size:24px; font-weight:700;" id="melhor-volta-nome">—</div>
+        </div>
+        <div>
+          <div class="stat-label">Tempo</div>
+          <div style="font-family:var(--font-display); font-size:36px; font-weight:800; color:var(--red);" id="melhor-volta-tempo">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tempo Total por Corredor -->
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Tempo Total por Corredor</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Corredor</th>
+              <th>Tempo Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-tempo-total">
+            <tr>
+              <td colspan="2">
+                <div class="empty-state">
+                  <div class="icon">⏱️</div>
+                  <p>Sem dados</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Voltas por Corredor -->
+    <div class="card">
+      <div class="card-title">Total de Voltas por Corredor</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Corredor</th>
+              <th>Voltas</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-voltas">
+            <tr>
+              <td colspan="2">
+                <div class="empty-state">
+                  <div class="icon">🔄</div>
+                  <p>Sem dados</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="sidebar.js"></script>
+<script>
+  renderSidebar('estatisticas');
+
+  function carregarEstatisticas() {
+    // GET /api/corredores/melhor-volta
+    fetch('/api/corredores/melhor-volta')
+      .then(r => r.json())
+      .then(data => {
+        if (data) {
+          document.getElementById('melhor-volta-nome').textContent  = data.nome;
+          document.getElementById('melhor-volta-tempo').textContent = data.tempo + 's';
+        }
+      })
+      .catch(err => console.error(err));
+
+    // GET /api/corredores/tempo-total
+    fetch('/api/corredores/tempo-total')
+      .then(r => r.json())
+      .then(lista => {
+        const tbody = document.getElementById('tbody-tempo-total');
+        if (lista && lista.length > 0) {
+          tbody.innerHTML = lista.map(r => `
+            <tr>
+              <td>${r.nome}</td>
+              <td class="td-red">${r['SUM(corridas.tempo)'] || '—'}</td>
+            </tr>
+          `).join('');
+        }
+      })
+      .catch(err => console.error(err));
+
+    // GET /api/corredores/voltas
+    fetch('/api/corredores/voltas')
+      .then(r => r.json())
+      .then(lista => {
+        const tbody = document.getElementById('tbody-voltas');
+        if (lista && lista.length > 0) {
+          tbody.innerHTML = lista.map(r => `
+            <tr>
+              <td>${r.nome}</td>
+              <td>${r['SUM(corridas.voltas)'] || '—'}</td>
+            </tr>
+          `).join('');
+        }
+      })
+      .catch(err => console.error(err));
+  }
+
+  carregarEstatisticas();
+</script>
+
+</body>
+</html>

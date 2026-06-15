@@ -53,6 +53,32 @@ router.post('/', async (req, res) => {
     });
 });
 
+
+router.post("/cadastro/corridas", (req, res) => {
+    const { tempo, voltas, corredores_id } = req.body;
+
+    if (!tempo || !voltas || !corredores_id) {
+        return res.status(400).json({ error: 'tempo, voltas e id do corredor são obrigatórios' });
+    }
+
+    const sql = "INSERT INTO corridas (tempo, voltas, corredores_id) VALUES (?, ?, ?)";
+
+    db.query(sql, [tempo, voltas, corredores_id], (err, results) => {
+        if (err) {
+            console.error('Erro ao cadastrar a corrida:', err);
+            return res.status(500).json({ error: 'Erro ao cadastrar a corrida' });
+        }
+
+        res.status(201).json({
+            message: 'Corrida criada com sucesso!',
+            id: results.insertId
+        });
+    });
+});
+
+
+
+
 router.delete('/:id', (req, res) => {
     const { id } = req.params
     const sql = "DELETE FROM corredores WHERE id = ?"
@@ -147,6 +173,7 @@ router.get("/voltas", (req, res) => {
         res.json(results);
     });
 });
+
 
 router.get("/ranking", (req, res) => {
     const sql = `

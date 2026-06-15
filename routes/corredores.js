@@ -79,6 +79,25 @@ router.post("/cadastro/corridas", (req, res) => {
 
 
 
+// GET todas as corridas (com dados do corredor)
+router.get("/corridas", (req, res) => {
+    const sql = `
+        SELECT corridas.id, corridas.tempo, corridas.voltas, corridas.corredores_id,
+               corredores.nome AS corredor_nome, corredores.turma AS corredor_turma
+        FROM corridas
+        LEFT JOIN corredores ON corredores.id = corridas.corredores_id
+        ORDER BY corridas.id DESC
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar corridas:', err);
+            return res.status(500).json({ error: 'Erro ao buscar corridas' });
+        }
+        res.json(results);
+    });
+});
+
 router.delete('/:id', (req, res) => {
     const { id } = req.params
     const sql = "DELETE FROM corredores WHERE id = ?"

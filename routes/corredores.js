@@ -55,15 +55,15 @@ router.post('/', async (req, res) => {
 
 
 router.post("/cadastro/corridas", (req, res) => {
-    const { tempo, voltas, corredores_id } = req.body;
+    const { nome, tempo, voltas, corredores_id } = req.body;
 
-    if (!tempo || !voltas || !corredores_id) {
-        return res.status(400).json({ error: 'tempo, voltas e id do corredor são obrigatórios' });
+    if (!nome || !tempo || !voltas || !corredores_id) {
+        return res.status(400).json({ error: 'nome, tempo, voltas e id do corredor são obrigatórios' });
     }
 
-    const sql = "INSERT INTO corridas (tempo, voltas, corredores_id) VALUES (?, ?, ?)";
+    const sql = "INSERT INTO corridas (nome, tempo, voltas, corredores_id) VALUES (?, ?, ?, ?)";
 
-    db.query(sql, [tempo, voltas, corredores_id], (err, results) => {
+    db.query(sql, [nome, tempo, voltas, corredores_id], (err, results) => {
         if (err) {
             console.error('Erro ao cadastrar a corrida:', err);
             return res.status(500).json({ error: 'Erro ao cadastrar a corrida' });
@@ -82,7 +82,7 @@ router.post("/cadastro/corridas", (req, res) => {
 // GET todas as corridas (com dados do corredor)
 router.get("/corridas", (req, res) => {
     const sql = `
-        SELECT corridas.id, corridas.tempo, corridas.voltas, corridas.corredores_id,
+        SELECT corridas.id, corridas.nome, corridas.tempo, corridas.voltas, corridas.corredores_id,
                corredores.nome AS corredor_nome, corredores.turma AS corredor_turma
         FROM corridas
         LEFT JOIN corredores ON corredores.id = corridas.corredores_id
@@ -93,6 +93,27 @@ router.get("/corridas", (req, res) => {
         if (err) {
             console.error('Erro ao buscar corridas:', err);
             return res.status(500).json({ error: 'Erro ao buscar corridas' });
+        }
+        res.json(results);
+    });
+});
+
+// GET pódium (média de tempo por corredor)
+router.get("/podium", (req, res) => {
+    const sql = `
+        SELECT corredores.id, corredores.nome, corredores.turma,
+               AVG(corridas.tempo) AS media_tempo,
+               COUNT(corridas.id) AS total_corridas
+        FROM corredores
+        INNER JOIN corridas ON corredores.id = corridas.corredores_id
+        GROUP BY corredores.id, corredores.nome, corredores.turma
+        ORDER BY media_tempo ASC
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Erro ao buscar pódium:', err);
+            return res.status(500).json({ error: 'Erro ao buscar pódium' });
         }
         res.json(results);
     });

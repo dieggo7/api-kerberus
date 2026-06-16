@@ -26,7 +26,7 @@ API REST do sistema **KERBERUS**, responsável por autenticação de usuários, 
 ```
 api-do-gui/
 ├── server.js            # Ponto de entrada — inicializa o servidor na porta configurada
-├── app.js               # Configuração do Express: middlewares, rotas e arquivos estáticos
+├── app.js               # Configuração do Express: middlewares e rotas da API
 ├── db.js                # Conexão com o MySQL via mysql2
 ├── dot.env              # Variáveis de ambiente (não versionado)
 ├── env.exemplo          # Modelo do arquivo .env para novos desenvolvedores
@@ -36,18 +36,8 @@ api-do-gui/
 │   ├── users.js         # Rotas de usuários: cadastro e login
 │   └── corredores.js    # Rotas de corredores: CRUD + consultas de corridas
 │
-├── sql/
-│   └── DDL.sql          # Script de criação do banco de dados e tabelas
-│
-└── public/              # Frontend estático servido pelo próprio Express
-    ├── login.html
-    ├── cadastro.html
-    ├── dashboard.html
-    ├── corredores.html
-    ├── ranking.html
-    ├── estatisticas.html
-    ├── sidebar.js
-    └── style.css
+└── sql/
+    └── DDL.sql          # Script de criação do banco de dados e tabelas
 ```
 
 ### Banco de Dados — `corrida_db`
@@ -86,8 +76,8 @@ DB_PORT=3307
 - Servidor HTTP via Express escutando na porta definida em `PORT` (padrão: `3000`)
 - Parsing de JSON e URL-encoded nos bodies das requisições
 - CORS habilitado para qualquer origem (`*`)
-- Arquivos estáticos do frontend servidos diretamente pelo Express a partir de `../front-api`
-- Rota raiz `GET /` redireciona para `login.html`
+- Rotas REST expostas em `/api/users` e `/api/corredores`
+- O frontend fica separado da API e não é mais servido como HTML estático pelo Express
 
 ---
 

@@ -22,9 +22,9 @@ app.use('/api/users', usersRouter);
 const corredoresRouter = require('./routes/corredores')
 app.use('/api/corredores', corredoresRouter)
 
-// Rota raiz - servir login
+// Rota raiz - servir landing page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../front-api', 'login.html'));
+    res.sendFile(path.join(__dirname, '../front-api', 'index.html'));
 });
 
 module.exports = app;

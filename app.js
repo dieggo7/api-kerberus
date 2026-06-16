@@ -4,8 +4,11 @@ const cors = require('cors');
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const path = require('path');
 
-// Configurar CORS
+// Serve os arquivos estáticos do frontend
+app.use(express.static(path.join(__dirname, '../front-api')));
+
 app.use(cors({
     origin: '*',
     credentials: true
@@ -15,7 +18,7 @@ app.use(cors({
 const usersRouter = require('./routes/users');
 app.use('/api/users', usersRouter);
 
-const corredoresRouter = require('./routes/corredores')
-app.use('/api/corredores', corredoresRouter)
+const corredoresRouter = require('./routes/corredores');
+app.use('/api/corredores', corredoresRouter);
 
 module.exports = app;

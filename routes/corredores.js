@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db')
-const bcrypt = require('bcrypt')
 
 
 // GET todos os corredores
@@ -29,18 +28,16 @@ router.get('/cadastrados', (req, res) => {
     })
 })
 
-router.post('/', async (req, res) => {
-    const { nome, turma, senha } = req.body;
+router.post('/', (req, res) => {
+    const { nome, turma, equipe } = req.body;
 
-    if (!nome || !turma || !senha) {
-        return res.status(400).json({ error: 'nome, turma e senha são obrigatórios' });
+    if (!nome || !turma || !equipe) {
+        return res.status(400).json({ error: 'nome, turma e equipe são obrigatórios' });
     }
 
-    const senhaHash2 = await bcrypt.hash(senha, 10);
+    const sql = "INSERT INTO corredores (nome, turma, equipe) VALUES(?,?,?)";
 
-    const sql = "INSERT INTO corredores (nome, turma, senha) VALUES(?,?,?)";
-
-    db.query(sql, [nome, turma, senhaHash2], (err, results) => {
+    db.query(sql, [nome, turma, equipe], (err, results) => {
         if (err) {
             console.error('Erro ao criar corredor:', err);
             return res.status(500).json({ error: 'Erro ao criar corredor' });
@@ -183,19 +180,17 @@ router.delete('/:id', (req, res) => {
     })
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', (req, res) => {
     const { id } = req.params;
-    const { nome, turma, senha } = req.body;
+    const { nome, turma, equipe } = req.body;
 
-    if (!nome || !turma || !senha) {
-        return res.status(400).json({ error: 'nome, turma e senha são obrigatórios' });
+    if (!nome || !turma || !equipe) {
+        return res.status(400).json({ error: 'nome, turma e equipe são obrigatórios' });
     }
 
-    const senhaHash2 = await bcrypt.hash(senha, 10);
+    const sql = "UPDATE corredores SET nome = ?, turma = ?, equipe = ? WHERE id = ?";
 
-    const sql = "UPDATE corredores SET nome = ?, turma = ?, senha = ? WHERE id = ?";
-
-    db.query(sql, [nome, turma, senhaHash2, id], (err, results) => {
+    db.query(sql, [nome, turma, equipe, id], (err, results) => {
         if (err) {
             console.error('Erro ao atualizar corredor:', err);
             return res.status(500).json({ error: 'Erro ao atualizar corredor' });

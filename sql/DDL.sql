@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `corrida_db`.`corredores` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nome` VARCHAR(255) NOT NULL,
   `turma` VARCHAR(255) NOT NULL,
-  `senha` VARCHAR(255) NOT NULL,
+  `equipe` VARCHAR(255) NOT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 

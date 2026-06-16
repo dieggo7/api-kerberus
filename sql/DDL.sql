@@ -50,6 +50,7 @@ DROP TABLE IF EXISTS `corrida_db`.`corridas` ;
 
 CREATE TABLE IF NOT EXISTS `corrida_db`.`corridas` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(100) NOT NULL,
   `tempo` DECIMAL(10,2) NULL,
   `voltas` INT NOT NULL, 
   `corredores_id` INT NULL,

@@ -119,13 +119,62 @@ router.get("/podium", (req, res) => {
     });
 });
 
+// PUT editar tempo/voltas de uma corrida (participação)
+router.put("/corridas/:id", (req, res) => {
+    const { id } = req.params;
+    const { tempo, voltas } = req.body;
+
+    if (tempo === undefined || voltas === undefined) {
+        return res.status(400).json({ error: 'tempo e voltas são obrigatórios' });
+    }
+
+    const sql = "UPDATE corridas SET tempo = ?, voltas = ? WHERE id = ?";
+
+    db.query(sql, [tempo, voltas, id], (err, results) => {
+        if (err) {
+            console.error('Erro ao atualizar corrida:', err);
+            return res.status(500).json({ error: 'Erro ao atualizar corrida' });
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ error: 'Corrida não encontrada' });
+        }
+
+        res.status(200).json({ message: 'Corrida atualizada com sucesso!' });
+    });
+});
+
+// DELETE remover uma corrida (participação)
+router.delete("/corridas/:id", (req, res) => {
+    const { id } = req.params;
+    const sql = "DELETE FROM corridas WHERE id = ?";
+
+    db.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error('Erro ao deletar corrida:', err);
+            return res.status(500).json({ error: 'Erro ao deletar corrida' });
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ error: 'Corrida não encontrada' });
+        }
+
+        res.status(200).json({ message: 'Corrida removida com sucesso!' });
+    });
+});
+
 router.delete('/:id', (req, res) => {
     const { id } = req.params
     const sql = "DELETE FROM corredores WHERE id = ?"
     db.query(sql, [id], (err, results) => {
         if (err) {
             console.error('Erro ao deletar corredor:', err);
-            res.status(500).json({ error: 'Erro ao deletar corredor' });
+            if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+                return res.status(409).json({
+                    error: 'Esse piloto possui corridas registradas e não pode ser removido. Remova as corridas dele primeiro.'
+                });
+            }
+            return res.status(500).json({ error: 'Erro ao deletar corredor' });
         } else if (results.affectedRows === 0) {
             res.status(404).json({ error: 'Corredor não encontrado' });
         } else {

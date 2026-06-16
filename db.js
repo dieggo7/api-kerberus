@@ -5,9 +5,9 @@ dotenv.config();
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'root',
     database: 'corrida_db',
-    port: 3306
+    port: 3307
 }); 
 
 connection.connect((err) => {

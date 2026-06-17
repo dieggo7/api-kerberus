@@ -2,6 +2,27 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db')
 
+function garantirTabelaVencedores(callback) {
+    const sql = `
+        CREATE TABLE IF NOT EXISTS corrida_vencedores (
+            id INT NOT NULL AUTO_INCREMENT,
+            corrida_nome VARCHAR(100) NOT NULL,
+            corredores_id INT NOT NULL,
+            criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uk_corrida_vencedor_nome (corrida_nome),
+            INDEX idx_corrida_vencedor_corredor (corredores_id),
+            CONSTRAINT fk_corrida_vencedor_corredor
+                FOREIGN KEY (corredores_id)
+                REFERENCES corredores (id)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE
+        )
+    `;
+
+    db.query(sql, callback);
+}
 
 // GET todos os corredores
 router.get('/', (req, res) => {
@@ -78,11 +99,25 @@ router.post("/cadastro/corridas", (req, res) => {
 
 // GET todas as corridas (com dados do corredor)
 router.get("/corridas", (req, res) => {
+    garantirTabelaVencedores((tableErr) => {
+        if (tableErr) {
+            console.error('Erro ao preparar tabela de vencedores:', tableErr);
+            return res.status(500).json({ error: 'Erro ao buscar corridas' });
+        }
+
     const sql = `
         SELECT corridas.id, corridas.nome, corridas.tempo, corridas.voltas, corridas.corredores_id,
-               corredores.nome AS corredor_nome, corredores.turma AS corredor_turma
+               corredores.nome AS corredor_nome, corredores.turma AS corredor_turma,
+               vencedores.corredores_id AS vencedor_corredores_id,
+               vencedor.nome AS vencedor_nome,
+               CASE
+                   WHEN vencedores.corredores_id = corridas.corredores_id THEN 1
+                   ELSE 0
+               END AS vencedor
         FROM corridas
         LEFT JOIN corredores ON corredores.id = corridas.corredores_id
+        LEFT JOIN corrida_vencedores vencedores ON vencedores.corrida_nome = corridas.nome
+        LEFT JOIN corredores vencedor ON vencedor.id = vencedores.corredores_id
         ORDER BY corridas.id DESC
     `;
 
@@ -92,6 +127,56 @@ router.get("/corridas", (req, res) => {
             return res.status(500).json({ error: 'Erro ao buscar corridas' });
         }
         res.json(results);
+    });
+    });
+});
+
+router.post("/corridas/:nome/vencedor", (req, res) => {
+    const { nome } = req.params;
+    const { corredores_id } = req.body;
+
+    if (!nome || !corredores_id) {
+        return res.status(400).json({ error: 'nome da corrida e id do corredor são obrigatórios' });
+    }
+
+    garantirTabelaVencedores((tableErr) => {
+        if (tableErr) {
+            console.error('Erro ao preparar tabela de vencedores:', tableErr);
+            return res.status(500).json({ error: 'Erro ao declarar vencedor' });
+        }
+
+        const validaParticipanteSql = `
+            SELECT id
+            FROM corridas
+            WHERE nome = ? AND corredores_id = ?
+            LIMIT 1
+        `;
+
+        db.query(validaParticipanteSql, [nome, corredores_id], (validaErr, participantes) => {
+            if (validaErr) {
+                console.error('Erro ao validar participante:', validaErr);
+                return res.status(500).json({ error: 'Erro ao declarar vencedor' });
+            }
+
+            if (!participantes.length) {
+                return res.status(400).json({ error: 'O vencedor precisa ser um participante dessa corrida' });
+            }
+
+            const upsertSql = `
+                INSERT INTO corrida_vencedores (corrida_nome, corredores_id)
+                VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE corredores_id = VALUES(corredores_id)
+            `;
+
+            db.query(upsertSql, [nome, corredores_id], (upsertErr) => {
+                if (upsertErr) {
+                    console.error('Erro ao salvar vencedor:', upsertErr);
+                    return res.status(500).json({ error: 'Erro ao declarar vencedor' });
+                }
+
+                res.status(200).json({ message: 'Vencedor declarado com sucesso!' });
+            });
+        });
     });
 });
 
@@ -144,19 +229,47 @@ router.put("/corridas/:id", (req, res) => {
 // DELETE remover uma corrida (participação)
 router.delete("/corridas/:id", (req, res) => {
     const { id } = req.params;
-    const sql = "DELETE FROM corridas WHERE id = ?";
+    const buscaSql = "SELECT nome, corredores_id FROM corridas WHERE id = ?";
 
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao deletar corrida:', err);
+    db.query(buscaSql, [id], (buscaErr, rows) => {
+        if (buscaErr) {
+            console.error('Erro ao buscar corrida:', buscaErr);
             return res.status(500).json({ error: 'Erro ao deletar corrida' });
         }
 
-        if (results.affectedRows === 0) {
-            return res.status(404).json({ error: 'Corrida não encontrada' });
-        }
+        const corrida = rows[0];
+        const sql = "DELETE FROM corridas WHERE id = ?";
 
-        res.status(200).json({ message: 'Corrida removida com sucesso!' });
+        db.query(sql, [id], (err, results) => {
+            if (err) {
+                console.error('Erro ao deletar corrida:', err);
+                return res.status(500).json({ error: 'Erro ao deletar corrida' });
+            }
+
+            if (results.affectedRows === 0) {
+                return res.status(404).json({ error: 'Corrida não encontrada' });
+            }
+
+            if (!corrida) {
+                return res.status(200).json({ message: 'Corrida removida com sucesso!' });
+            }
+
+            garantirTabelaVencedores((tableErr) => {
+                if (tableErr) {
+                    console.error('Erro ao preparar tabela de vencedores:', tableErr);
+                    return res.status(200).json({ message: 'Corrida removida com sucesso!' });
+                }
+
+                const limpaVencedorSql = `
+                    DELETE FROM corrida_vencedores
+                    WHERE corrida_nome = ? AND corredores_id = ?
+                `;
+
+                db.query(limpaVencedorSql, [corrida.nome, corrida.corredores_id], () => {
+                    res.status(200).json({ message: 'Corrida removida com sucesso!' });
+                });
+            });
+        });
     });
 });
 
@@ -218,13 +331,13 @@ router.get("/melhor-volta", (req, res) => {
             console.error('Erro ao buscar melhor volta:', err);
             return res.status(500).json({ error: 'Erro ao buscar melhor volta' });
         }
-        res.json(results[0]);
+        res.json(results[0] || null);
     });
 });
 
 router.get("/tempo-total", (req, res) => {
     const sql = `
-        SELECT corredores.nome, SUM(corridas.tempo)
+        SELECT corredores.nome, SUM(corridas.tempo) AS tempo_total
         FROM corredores, corridas
         WHERE corredores.id = corridas.corredores_id
         GROUP BY corredores.id, corredores.nome
@@ -242,7 +355,7 @@ router.get("/tempo-total", (req, res) => {
 
 router.get("/voltas", (req, res) => {
     const sql = `
-        SELECT corredores.nome, SUM(corridas.voltas)
+        SELECT corredores.nome, SUM(corridas.voltas) AS total_voltas
         FROM corredores, corridas
         WHERE corredores.id = corridas.corredores_id
         GROUP BY corredores.id, corredores.nome
@@ -261,7 +374,7 @@ router.get("/voltas", (req, res) => {
 
 router.get("/ranking", (req, res) => {
     const sql = `
-        SELECT corredores.nome, corredores.turma, SUM(corridas.tempo)
+        SELECT corredores.nome, corredores.turma, SUM(corridas.tempo) AS tempo_total
         FROM corredores, corridas
         WHERE corredores.id = corridas.corredores_id
         GROUP BY corredores.id, corredores.nome, corredores.turma

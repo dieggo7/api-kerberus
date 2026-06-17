@@ -21,4 +21,7 @@ app.use('/api/users', usersRouter);
 const corredoresRouter = require('./routes/corredores');
 app.use('/api/corredores', corredoresRouter);
 
+const estatisticasRouter = require('./routes/estatisticas');
+app.use('/api/estatisticas', estatisticasRouter);
+
 module.exports = app;

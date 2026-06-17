@@ -64,6 +64,28 @@ CREATE TABLE IF NOT EXISTS `corrida_db`.`corridas` (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table `corrida_db`.`corrida_vencedores`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `corrida_db`.`corrida_vencedores` ;
+
+CREATE TABLE IF NOT EXISTS `corrida_db`.`corrida_vencedores` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `corrida_nome` VARCHAR(100) NOT NULL,
+  `corredores_id` INT NOT NULL,
+  `criado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `atualizado_em` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uk_corrida_vencedor_nome` (`corrida_nome` ASC) VISIBLE,
+  INDEX `idx_corrida_vencedor_corredor` (`corredores_id` ASC) VISIBLE,
+  CONSTRAINT `fk_corrida_vencedor_corredor`
+    FOREIGN KEY (`corredores_id`)
+    REFERENCES `corrida_db`.`corredores` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
